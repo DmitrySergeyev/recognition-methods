@@ -1,0 +1,87 @@
+﻿<Window x:Class="WpfRecognitionMethodsApp.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:WpfRecognitionMethodsApp"        
+        xmlns:lvc="clr-namespace:LiveCharts.Wpf;assembly=LiveCharts.Wpf"
+        mc:Ignorable="d"
+        Title="MainWindow" Width="1280" Height="720">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="10"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Grid Margin="5" Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox Grid.Column="0" x:Name="filePathTextBox" IsReadOnly="true" Margin="10" Height="30"
+                     Text="{Binding Path, UpdateSourceTrigger=PropertyChanged, Mode=OneWay}"/>
+            <Button Grid.Column="2" x:Name="browseButton" Content="Browse" Width="80" Height="30"
+                    Click="browseButton_Click"/>
+        </Grid>
+        <Grid Name="dataGrid" Margin="5" Grid.Row="2" IsEnabled="false">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="10"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TabControl Grid.Column="0">
+                <TabItem Header="Original">
+                    <Image x:Name="originalImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                           Height="{Binding OriginalBitmapImage.PixelHeight}" Width="{Binding OriginalBitmapImage.PixelWidth}"
+                           Source="{Binding OriginalBitmapImage}"/>
+                </TabItem>
+            </TabControl>
+
+            <TabControl Grid.Column="2" SelectionChanged="TabControl_SelectionChanged">
+                <TabItem Header="1. Binarisation">
+                    <Image x:Name="binaryImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                </TabItem>
+                <TabItem Header="2. Equalisation">
+                    <Grid Name="equalisationGrid" Margin="5" Grid.Row="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Image x:Name="equalisedImage" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button x:Name="showEqualisationPlots" Grid.Row="2" Content="Show plots" Width="80" Height="30" 
+                                VerticalAlignment="Center" HorizontalAlignment="Right" Click ="showPLotsButton_Click"/>
+                    </Grid>
+
+                </TabItem>
+                <TabItem Header="3. Filtration">
+                  <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="30"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <Image x:Name="filteredImage" Grid.Row="1" Grid.ColumnSpan="2" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Slider x:Name="filterSlider" Grid.Row="2" Grid.Column="0" Minimum="3" Maximum="15" Value="3" IsSnapToTickEnabled="True" TickFrequency="2"
+                                AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="3" Margin="25 5" Cursor="Arrow" ValueChanged="filter_ValueChanged"/>
+                        <Button x:Name="showFilteredImageBtn" Grid.Row="2" Grid.Column="1" Content="FIltering (3)" Width="80" Height="30" 
+                                VerticalAlignment="Center" HorizontalAlignment="Center" Click ="filteringButton_Click"/>
+                    </Grid>  
+                </TabItem>
+                <TabItem Header="2.3 T(r)">
+                    <Grid>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="2.4 Ps(s)">
+                    <Grid>
+                    </Grid>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Grid>
+</Window>
