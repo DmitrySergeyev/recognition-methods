@@ -12,30 +12,47 @@ namespace WpfRecognitionMethodsApp
     public class ImageProcessor
     {
         private string path;
-        private BitmapImage originalBitmapImage;
+        // private BitmapImage originalBitmapImage;
+        private WriteableBitmap originalBitmapImage;
         private WriteableBitmap binaryBitmapImage;
         private WriteableBitmap equalisedBitmapImage;
         private WriteableBitmap filteredBitmapImage;
+
+        private WriteableBitmap image2D;
+        private WriteableBitmap image2DFourier;
+        private WriteableBitmap imageBack2D;
+
         private byte[] transformFunctionNorm;
         private float[] transformFunction;
+        private Complex[,] fourierData;
 
         private byte[] getOriginalPixels()
         {
-            byte[] pixelData = new byte[this.originalBitmapImage.PixelHeight * this.originalBitmapImage.PixelWidth];
-            this.originalBitmapImage.CopyPixels(
+            return this.getImagePixels(this.originalBitmapImage);
+        }
+
+        private byte[] getImagePixels(BitmapSource imageSource)
+        {
+            byte[] pixelData = new byte[imageSource.PixelHeight * imageSource.PixelWidth];
+            imageSource.CopyPixels(
                 pixelData,
-                originalBitmapImage.PixelWidth * originalBitmapImage.Format.BitsPerPixel / 8,
+                imageSource.PixelWidth * imageSource.Format.BitsPerPixel / 8,
                 0);
 
             return pixelData;
         }
 
-        private byte[,] getOriginalPixels2D ()
-        { 
-            return this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());               
+        public byte[,] GetOriginalPixels2D()
+        {
+            return this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());
         }
 
-        private byte [,] getTwoDimArray (byte [] oneDimArray, int arrayWidth)
+        public byte[,] GetImagePixels2D()
+        {
+            return this.getTwoDimArray(this.getImagePixels(this.image2D), this.image2D.PixelWidth);
+        }
+
+        private byte[,] getTwoDimArray(byte[] oneDimArray, int arrayWidth)
         {
             if (oneDimArray.Length % arrayWidth != 0)
             {
@@ -49,6 +66,11 @@ namespace WpfRecognitionMethodsApp
 
                 byte[,] result = new byte[x, y];
 
+                //for (int i = 0; i < x; i++)
+                //{
+                //    result[i] = new byte[y];
+                //}
+
                 for (int i = 0; i < oneDimArray.Length; i++)
                 {
                     result[i / y, i % y] = oneDimArray[i];
@@ -58,7 +80,22 @@ namespace WpfRecognitionMethodsApp
             }
         }
 
-        private byte[] getOneDimArray (byte[,] twoDimArray)
+        private double[] getOneDimArray(double[,] twoDimArray)
+        {
+            List<double> result = new List<double>();
+
+            for (int i = 0; i <= twoDimArray.GetUpperBound(0); i++)
+            {
+                for (int j = 0; j <= twoDimArray.GetUpperBound(1); j++)
+                {
+                    result.Add(twoDimArray[i, j]);
+                }
+            }
+
+            return result.ToArray();
+        }
+
+        private byte[] getOneDimArray(byte[,] twoDimArray)
         {
             List<byte> buff = new List<byte>();
 
@@ -73,9 +110,9 @@ namespace WpfRecognitionMethodsApp
         private WriteableBitmap writePixels(WriteableBitmap bitmap, byte[] pixels)
         {
             bitmap.WritePixels(
-                            new Int32Rect(0, 0, originalBitmapImage.PixelWidth, originalBitmapImage.PixelHeight),
+                            new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight),
                             pixels,
-                            originalBitmapImage.PixelWidth * originalBitmapImage.Format.BitsPerPixel / 8,
+                            bitmap.PixelWidth * bitmap.Format.BitsPerPixel / 8,
                             0);
 
             return bitmap;
@@ -114,10 +151,19 @@ namespace WpfRecognitionMethodsApp
         public ImageProcessor(String path)
         {
             this.path = path;
-            this.originalBitmapImage = new BitmapImage();
-            this.originalBitmapImage.BeginInit();
-            this.originalBitmapImage.UriSource = new Uri(this.path);
-            this.originalBitmapImage.EndInit();
+
+            BitmapImage bi = new BitmapImage();
+            bi.BeginInit();
+            bi.UriSource = new Uri(this.path);
+            bi.EndInit();
+            this.originalBitmapImage = new WriteableBitmap(bi);
+
+            //BitmapImage bi = new BitmapImage();
+            //bi.BeginInit();
+            //bi.UriSource = new Uri(this.path);
+            //bi.EndInit();
+            //CroppedBitmap cb = new CroppedBitmap(bi, new Int32Rect(50, 50, 16, 16));
+            //this.originalBitmapImage = new WriteableBitmap( cb );
         }
 
         public int GetOriginalHeight()
@@ -130,7 +176,8 @@ namespace WpfRecognitionMethodsApp
             return this.originalBitmapImage.PixelWidth;
         }
 
-        public BitmapImage GetOriginalImage()
+        // public BitmapImage GetOriginalImage()
+        public WriteableBitmap GetOriginalImage()
         {
             return this.originalBitmapImage;
         }
@@ -140,7 +187,36 @@ namespace WpfRecognitionMethodsApp
             return this.getHistogramFromBitmap(this.originalBitmapImage);
         }
 
-        public WriteableBitmap GetBinaryBitmapImage ()
+        public ImageSource GetSubImage(int x, int y, int dx, int dy)
+        {
+            byte[] pixels = this.GetSomePixels(x, y, dx, dy);
+
+            this.image2D = new WriteableBitmap(
+                dx,
+                dy,
+                this.originalBitmapImage.DpiX,
+                this.originalBitmapImage.DpiY,
+                this.originalBitmapImage.Format,
+                this.originalBitmapImage.Palette
+            );
+
+            //CroppedBitmap cb = new CroppedBitmap(this.originalBitmapImage, new Int32Rect(x, y, dx, dy));
+            //w.image2DFourierSeries.Source = cb;
+
+            //this.image2D = new WriteableBitmap(
+            //           64,
+            //           64,
+            //           this.originalBitmapImage.DpiX,
+            //           this.originalBitmapImage.DpiY,
+            //           this.originalBitmapImage.Format,
+            //           this.originalBitmapImage.Palette);
+
+            this.writePixels(this.image2D, pixels);
+
+            return this.image2D;
+        }
+
+        public WriteableBitmap GetBinaryBitmapImage()
         {
             if (this.binaryBitmapImage == null)
             {
@@ -160,9 +236,9 @@ namespace WpfRecognitionMethodsApp
             }
         }
 
-        public float[] GetEqualisedImageHistogram ()
+        public float[] GetEqualisedImageHistogram()
         {
-            if(this.equalisedBitmapImage == null)
+            if (this.equalisedBitmapImage == null)
             {
                 this.GetEqualisedBitmapImage();
             }
@@ -170,9 +246,10 @@ namespace WpfRecognitionMethodsApp
             return this.getHistogramFromBitmap(this.equalisedBitmapImage);
         }
 
-        public WriteableBitmap GetEqualisedBitmapImage ()
+        public WriteableBitmap GetEqualisedBitmapImage()
         {
-            if (this.equalisedBitmapImage == null) {
+            if (this.equalisedBitmapImage == null)
+            {
                 this.equalisedBitmapImage = new WriteableBitmap(this.originalBitmapImage);
                 byte[] pixels = this.getOriginalPixels();
                 float[] originalHistogram = this.getHistogramFromArray(this.getOriginalPixels());
@@ -215,7 +292,7 @@ namespace WpfRecognitionMethodsApp
         }
         public byte[] GetTransformfunctionNorm()
         {
-            if(this.transformFunctionNorm == null)
+            if (this.transformFunctionNorm == null)
             {
                 this.GetEqualisedBitmapImage();
             }
@@ -226,7 +303,7 @@ namespace WpfRecognitionMethodsApp
         {
 
             this.filteredBitmapImage = new WriteableBitmap(this.originalBitmapImage);
-            byte[,] pixels = this.getOriginalPixels2D();
+            byte[,] pixels = this.GetOriginalPixels2D();
 
             int x = pixels.GetLength(0);
             int y = pixels.GetLength(1);
@@ -259,6 +336,329 @@ namespace WpfRecognitionMethodsApp
             }
 
             return this.writePixels(this.filteredBitmapImage, this.getOneDimArray(result));
+        }
+
+        public int[] GetSomePixels(int x, int y, int pixelsCount)
+        {
+            int[] result = new int[pixelsCount];
+
+            if (this.GetOriginalWidth() * y + x + pixelsCount <= this.getOriginalPixelsCount())
+            {
+                Array.Copy(this.getOriginalPixels(), (this.GetOriginalWidth() * y + x), result, 0, pixelsCount);
+            }
+
+            return result;
+        }
+
+        public byte[] GetSomePixels(int x, int y, int dx, int dy)
+        {
+            return this.getOneDimArray(this.GetSome2DPixels(x, y, dx, dy));
+        }
+
+        public byte[,] GetSome2DPixels(int x, int y, int dx, int dy)
+        {
+            byte[,] result = new byte[dx, dy];
+
+            byte[,] original = this.GetOriginalPixels2D();
+
+            if ((x + dx) < this.GetOriginalWidth() && (y + dy) < this.GetOriginalHeight())
+            {
+                for (int i = 0; i < dy; i++)
+                {
+                    for (int j = 0; j < dx; j++)
+                    {
+                        result[i, j] = original[y + i, x + j];
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        public double[] GetOneDimentuionalFourier(int[] pixels)
+        {
+            int m = pixels.Length;
+            double[] result = new double[m];
+
+            double re = 0.0d;
+            double im = 0.0d;
+
+            for (int i = 0; i < m; i++)
+            {
+                re = 0.0d;
+                im = 0.0d;
+
+                for (int x = 0; x < m; x++)
+                {
+                    double q = 2 * Math.PI * i * x / m;
+                    double s1 = Math.Sin(q);
+                    double s2 = Math.Cos(q);
+                    re += pixels[x] * Math.Cos(q) * Math.Pow(-1.0, x);
+                    im -= pixels[x] * Math.Sin(q) * Math.Pow(-1.0, x);
+                }
+
+                re /= m;
+                im /= m;
+
+                result[i] = Math.Pow((Math.Pow(re, 2) + Math.Pow(im, 2)), 0.5);
+            }
+
+            return result;
+        }
+
+        public Complex[,] ToFourier(byte[,] input)
+        {
+            int n = input.GetLength(0);
+            int m = input.GetLength(1);
+
+            Complex[,] output = this.GetComplexArray(n, m);
+
+            double re = 0.0d;
+            double im = 0.0d;
+            double arg;
+
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < m; x++)
+                {
+                    re = 0.0d;
+                    im = 0.0d;
+
+                    for (int v = 0; v < n; v++)
+                    {
+                        for (int u = 0; u < m; u++)
+                        {
+                            arg = 2.0 * Math.PI * (((double)u * x / m) + ((double)v * y / n));
+
+                            //if ((u + v) % 2 == 1)
+                            //{
+                            //    c = -1;
+                            //}
+                            //else
+                            //{
+                            //    c = 1;
+                            //}
+
+                            re += input[v, u] * Math.Cos(arg) /** c*/;
+                            im -= input[v, u] * Math.Sin(arg) /** c;*/;
+                        }
+                    }
+
+                    re /= m;
+                    re /= n;
+                    im /= m;
+                    im /= n;
+
+                    output[y, x].a = re;
+                    output[y, x].b = im;
+                }
+            }
+
+            return output;
+        }
+
+        private Complex[,] GetComplexArray(int n, int m)
+        {
+            Complex[,] output = new Complex [n, m];
+
+            for (int i = 0; i < n; i ++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    output[i, j] = new Complex();
+                }
+            }
+
+            return output;
+        }
+
+        public Complex[,] FromFourier(Complex[,] input)
+        {
+            int n = input.GetLength(0);
+            int m = input.GetLength(1);
+
+            Complex[,] output = this.GetComplexArray(n, m); 
+
+            double re = 0.0d;
+            double im = 0.0d;
+            double arg, c, d;
+
+            for (int y = 0; y < n; y++)
+            {
+                for (int x = 0; x < m; x++)
+                {
+                    re = 0.0d;
+                    im = 0.0d;
+
+                    for (int v = 0; v < n; v++)
+                    {
+                        for (int u = 0; u < m; u++)
+                        {
+
+                            //z = Math.Pow(
+                            //        Math.Pow(this.fourierData[v, u, 0], 2) +
+                            //        Math.Pow(this.fourierData[v, u, 1], 2), 
+                            //        0.5);
+
+                            //p = Math.Atan(this.fourierData[v, u, 1] / this.fourierData[v, u, 0]);
+
+
+                            arg = 2.0 * Math.PI * (((double)u * x / m) + ((double)v * y / n));
+                            c = Math.Cos(arg);
+                            d = Math.Sin(arg);
+
+                            re += input[v, u].a * c - input[v, u].b * d;
+                            im += input[v, u].a * d + input[v, u].b * c;
+                           
+                            //if ((u + v) % 2 == 1)
+                            //{
+                            //    c = -1;
+                            //}
+                            //else
+                            //{
+                            //    c = 1; 
+                            //}
+
+                            // re += z * Math.Cos(q)/* * c*/;
+                            // im += z * Math.Sin(q)/* * c*/;
+                        }
+                    }
+
+                    output[y, x].a = re;
+                    output[y, x].b = im;
+                }
+            }
+
+            return output;
+        }
+
+        private double[,] getFourierSpectre(Complex[,] fourierImage)
+        {
+            double[,] result = new double[fourierImage.GetLength(0), fourierImage.GetLength(1)];
+
+            for (int i = 0; i < fourierImage.GetLength(0); i++)
+            {
+                for (int j = 0; j < fourierImage.GetLength(1); j++)
+                {
+                    result[i, j] = Math.Pow(
+                        Math.Pow(fourierImage[i, j].a, 2) + 
+                        Math.Pow(fourierImage[i, j].b, 2),
+                        0.5);
+                }
+            }
+
+            return result;
+        }
+
+        public WriteableBitmap GetTwoDimentuionalFourierImage()
+        {
+            byte[,] pixels = this.GetImagePixels2D();
+            this.fourierData = this.ToFourier(pixels);
+
+            double[] buf = this.getOneDimArray(
+                this.getFourierSpectre(
+                    this.fourierData));
+
+            int n = pixels.GetUpperBound(0) + 1;
+            int m = pixels.GetUpperBound(1) + 1;
+
+            double max = buf.Max<double>();
+            double min = buf.Min<double>();
+            double span = max - min;
+
+
+            byte[] result = new byte[ n * m];
+
+            for (int i = 0; i < n*m; i++)
+            {
+                result[i] = Convert.ToByte((buf[i] - min) / span * 255.0);
+            }
+
+            this.image2DFourier = new WriteableBitmap(this.image2D);
+       //     result = this.logBitmapImage(result);
+            this.image2DFourier = this.writePixels(this.image2DFourier, result);
+
+            return this.image2DFourier;
+        }
+        
+        public WriteableBitmap GetTwoDimentuionalBackFourierImage()
+        {
+            byte[,] pixels = this.GetImagePixels2D();
+            Complex [,] buf = this.FromFourier(this.fourierData);
+
+            int n = pixels.GetLength(0);
+            int m = pixels.GetLength(1);
+
+            double[] buf1 = new double [n * m];
+
+            for (int i = 0; i < n; i++)
+            {
+                for (int j = 0; j < m; j++)
+                {
+                    buf1[i * n + j] = buf[i, j].a;
+                }
+            }
+
+            double max = buf1.Max<double>();
+            double min = buf1.Min<double>();
+            double span = max - min;
+
+            byte[] result = new byte[n * m];
+
+            for (int i = 0; i < n * m; i++)
+            {
+                result[i] = Convert.ToByte((buf1[i] - min) / span * 255.0);
+            }
+
+            this.imageBack2D = new WriteableBitmap(this.image2D);
+            this.imageBack2D = this.writePixels(this.imageBack2D, result);
+
+            return this.imageBack2D;
+        }
+
+        private byte[] logBitmapImage(byte [] pixels)
+        {
+            double[] f = new double[256];
+            byte [] t = new byte[256];
+
+            for (int i = 0; i < f.Length; i++)
+            {
+                f[i] = Math.Log(i + 1, 2);
+            }
+
+            double max = f.Max<double>();
+            double min = f.Min<double>();
+            double span = max - min;
+
+            for (int i = 0; i < f.Length; i++)
+            {
+                t[i] = Convert.ToByte((f[i] - min) / span * 255.0); 
+            }
+
+            for (int i = 0; i < pixels.GetLength(0); i++)
+            {
+                pixels[i] = t[pixels[i]];
+            }
+            
+            return pixels;
+        }
+    }
+
+    public class Complex
+    {
+        public double a;
+        public double b;
+
+        public Complex()
+        {
+            this.a = 0;
+            this.b = 0;
+        }
+
+        public Complex (double a, double b)
+        {
+            this.a = a;
+            this.b = b;
         }
     }
 }

@@ -31,14 +31,14 @@
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <TabControl Grid.Column="0">
-                <TabItem Header="Original">
+                <TabItem x:Name="origanalTabItem" Header="Original">
                     <Image x:Name="originalImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center" 
                            Height="{Binding OriginalBitmapImage.PixelHeight}" Width="{Binding OriginalBitmapImage.PixelWidth}"
-                           Source="{Binding OriginalBitmapImage}"/>
+                           Source="{Binding OriginalBitmapImage}" MouseDown="originalImage_MouseDown"/>
                 </TabItem>
             </TabControl>
 
-            <TabControl Grid.Column="2" SelectionChanged="TabControl_SelectionChanged">
+            <TabControl x:Name="modifiedTabItem"  Grid.Column="2" SelectionChanged="TabControl_SelectionChanged">
                 <TabItem Header="1. Binarisation">
                     <Image x:Name="binaryImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </TabItem>
@@ -73,12 +73,64 @@
                                 VerticalAlignment="Center" HorizontalAlignment="Center" Click ="filteringButton_Click"/>
                     </Grid>  
                 </TabItem>
-                <TabItem Header="2.3 T(r)">
+                <TabItem Header="4. One dimentional Fourier">
                     <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid Grid.Row="0">
+                            <lvc:CartesianChart Series="{Binding Pisels1DSeries}" LegendLocation="Left">
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="Salesman" Labels="{Binding Pixels1DFourierSeries}"></lvc:Axis>
+                                </lvc:CartesianChart.AxisX>
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="Sold Apps" LabelFormatter="{Binding Pixels1DFormatter}"></lvc:Axis>
+                                </lvc:CartesianChart.AxisY>
+                            </lvc:CartesianChart>
+                        </Grid>
+                        <Grid Grid.Row="1" Grid.ColumnSpan="2">
+                            <lvc:CartesianChart Series="{Binding Pixels1DFourierSeries}" LegendLocation="Left">
+                                <lvc:CartesianChart.AxisX>
+                                    <lvc:Axis Title="Salesman" Labels="{Binding Pixels1DFourierLabels}"></lvc:Axis>
+                                </lvc:CartesianChart.AxisX>
+                                <lvc:CartesianChart.AxisY>
+                                    <lvc:Axis Title="Sold Apps" LabelFormatter="{Binding Pixels1DFourierFormatter}"></lvc:Axis>
+                                </lvc:CartesianChart.AxisY>
+                            </lvc:CartesianChart>
+                        </Grid>
                     </Grid>
                 </TabItem>
-                <TabItem Header="2.4 Ps(s)">
-                    <Grid>
+                <TabItem Header="5. Two dimentional Fourier">
+                    <Grid Margin="5">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="256"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="256"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image x:Name="image2DSeries" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10"/>
+                        <Image x:Name="imageBack2DSeries" Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="2" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10"/>
+                        <Image x:Name="image2DFourierSeries" Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" Stretch="Uniform" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="10"/>
+                        <Grid Grid.Row="3" Grid.ColumnSpan="4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="100"/>
+                                <ColumnDefinition Width="100"/>
+                            </Grid.ColumnDefinitions>
+                            <Button x:Name="calculate2DFourier" Grid.Column="1" Content="Direct" Margin="5" Click ="calculate2DFourier_Click_1"/>
+                            <Button x:Name="calculateBack2DFourier" Grid.Column="2" Content="Back" Margin="5" Click ="calculateBack2DFourier_Click"/>
+                        </Grid>
+                        
                     </Grid>
                 </TabItem>
             </TabControl>
