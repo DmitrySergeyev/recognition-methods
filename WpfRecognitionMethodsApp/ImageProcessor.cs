@@ -12,19 +12,19 @@ namespace WpfRecognitionMethodsApp
     public class ImageProcessor
     {
         private string path;
-        // private BitmapImage originalBitmapImage;
         private WriteableBitmap originalBitmapImage;
         private WriteableBitmap binaryBitmapImage;
         private WriteableBitmap equalisedBitmapImage;
         private WriteableBitmap filteredBitmapImage;
 
-        private WriteableBitmap image2D;
-        private WriteableBitmap image2DFourier;
-        private WriteableBitmap imageBack2D;
+        private WriteableBitmap toFourierBitmap;
+        private WriteableBitmap fourierImage;
+        private WriteableBitmap fromFourierBitmap;
 
         private byte[] transformFunctionNorm;
         private float[] transformFunction;
         private Complex[,] fourierData;
+        private Complex[,] fourierData2;
 
         private byte[] getOriginalPixels()
         {
@@ -49,7 +49,7 @@ namespace WpfRecognitionMethodsApp
 
         public byte[,] GetImagePixels2D()
         {
-            return this.getTwoDimArray(this.getImagePixels(this.image2D), this.image2D.PixelWidth);
+            return this.getTwoDimArray(this.getImagePixels(this.toFourierBitmap), this.toFourierBitmap.PixelWidth);
         }
 
         private byte[,] getTwoDimArray(byte[] oneDimArray, int arrayWidth)
@@ -191,7 +191,7 @@ namespace WpfRecognitionMethodsApp
         {
             byte[] pixels = this.GetSomePixels(x, y, dx, dy);
 
-            this.image2D = new WriteableBitmap(
+            this.toFourierBitmap = new WriteableBitmap(
                 dx,
                 dy,
                 this.originalBitmapImage.DpiX,
@@ -211,9 +211,9 @@ namespace WpfRecognitionMethodsApp
             //           this.originalBitmapImage.Format,
             //           this.originalBitmapImage.Palette);
 
-            this.writePixels(this.image2D, pixels);
+            this.writePixels(this.toFourierBitmap, pixels);
 
-            return this.image2D;
+            return this.toFourierBitmap;
         }
 
         public WriteableBitmap GetBinaryBitmapImage()
@@ -416,6 +416,7 @@ namespace WpfRecognitionMethodsApp
             double re = 0.0d;
             double im = 0.0d;
             double arg;
+            int c;
 
             for (int y = 0; y < n; y++)
             {
@@ -430,17 +431,17 @@ namespace WpfRecognitionMethodsApp
                         {
                             arg = 2.0 * Math.PI * (((double)u * x / m) + ((double)v * y / n));
 
-                            //if ((u + v) % 2 == 1)
-                            //{
-                            //    c = -1;
-                            //}
-                            //else
-                            //{
-                            //    c = 1;
-                            //}
+                            if ((u + v) % 2 == 1)
+                            {
+                                c = -1;
+                            }
+                            else
+                            {
+                                c = 1;
+                            }
 
-                            re += input[v, u] * Math.Cos(arg) /** c*/;
-                            im -= input[v, u] * Math.Sin(arg) /** c;*/;
+                            re += input[v, u] * Math.Cos(arg) * c;
+                            im -= input[v, u] * Math.Sin(arg) * c;
                         }
                     }
 
@@ -493,34 +494,13 @@ namespace WpfRecognitionMethodsApp
                     for (int v = 0; v < n; v++)
                     {
                         for (int u = 0; u < m; u++)
-                        {
-
-                            //z = Math.Pow(
-                            //        Math.Pow(this.fourierData[v, u, 0], 2) +
-                            //        Math.Pow(this.fourierData[v, u, 1], 2), 
-                            //        0.5);
-
-                            //p = Math.Atan(this.fourierData[v, u, 1] / this.fourierData[v, u, 0]);
-
-
+                        { 
                             arg = 2.0 * Math.PI * (((double)u * x / m) + ((double)v * y / n));
                             c = Math.Cos(arg);
                             d = Math.Sin(arg);
 
                             re += input[v, u].a * c - input[v, u].b * d;
                             im += input[v, u].a * d + input[v, u].b * c;
-                           
-                            //if ((u + v) % 2 == 1)
-                            //{
-                            //    c = -1;
-                            //}
-                            //else
-                            //{
-                            //    c = 1; 
-                            //}
-
-                            // re += z * Math.Cos(q)/* * c*/;
-                            // im += z * Math.Sin(q)/* * c*/;
                         }
                     }
 
@@ -562,23 +542,33 @@ namespace WpfRecognitionMethodsApp
             int n = pixels.GetUpperBound(0) + 1;
             int m = pixels.GetUpperBound(1) + 1;
 
-            double max = buf.Max<double>();
+            for (int i = 0; i < buf.Length; i++)
+            {
+                buf[i] = Math.Log(buf[i] /*- min + 1*/, 2);
+            }
+
+
             double min = buf.Min<double>();
+            double max = buf.Max<double>();
             double span = max - min;
 
+            for (int i = 0; i < buf.Length; i++)
+            {
+                buf[i] -= min;
+            }
 
-            byte[] result = new byte[ n * m];
+            byte[] result = new byte[n * m];
 
             for (int i = 0; i < n*m; i++)
             {
-                result[i] = Convert.ToByte((buf[i] - min) / span * 255.0);
+                result[i] = Convert.ToByte((buf[i]) / span * 255.0);
             }
 
-            this.image2DFourier = new WriteableBitmap(this.image2D);
-       //     result = this.logBitmapImage(result);
-            this.image2DFourier = this.writePixels(this.image2DFourier, result);
+            this.fourierImage = new WriteableBitmap(this.toFourierBitmap);
+          //  result = this.logBitmapImage(result);
+            this.fourierImage = this.writePixels(this.fourierImage, result);
 
-            return this.image2DFourier;
+            return this.fourierImage;
         }
         
         public WriteableBitmap GetTwoDimentuionalBackFourierImage()
@@ -610,12 +600,41 @@ namespace WpfRecognitionMethodsApp
                 result[i] = Convert.ToByte((buf1[i] - min) / span * 255.0);
             }
 
-            this.imageBack2D = new WriteableBitmap(this.image2D);
-            this.imageBack2D = this.writePixels(this.imageBack2D, result);
+           // result = this.logBitmapImage(result);
 
-            return this.imageBack2D;
+            this.fromFourierBitmap = new WriteableBitmap(this.toFourierBitmap);
+            this.fromFourierBitmap = this.writePixels(this.fromFourierBitmap, result);
+
+            return this.fromFourierBitmap;
         }
 
+        private byte [] logBitmapImage(double[] pixels) {
+
+            double[] f = new double[256];
+            byte[] t = new byte[256];
+            byte[] result = new byte[pixels.Length];
+
+            for (int i = 0; i < f.Length; i++)
+            {
+                f[i] = Math.Log(i + 1, 2);
+            }
+
+            double max = f.Max<double>();
+            double min = f.Min<double>();
+            double span = max - min;
+
+            for (int i = 0; i < f.Length; i++)
+            {
+                t[i] = Convert.ToByte((f[i] - min) / span * 255.0);
+            }
+
+            for (int i = 0; i < pixels.GetLength(0); i++)
+            {
+                result[i] = t[Convert.ToByte(pixels[i])];
+            }
+
+            return result;
+        }
         private byte[] logBitmapImage(byte [] pixels)
         {
             double[] f = new double[256];
@@ -639,7 +658,7 @@ namespace WpfRecognitionMethodsApp
             {
                 pixels[i] = t[pixels[i]];
             }
-            
+
             return pixels;
         }
     }
