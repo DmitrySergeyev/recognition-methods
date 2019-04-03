@@ -130,8 +130,11 @@
                             <Button x:Name="calculate2DFourier" Grid.Column="1" Content="Direct" Margin="5" Click ="calculate2DFourier_Click_1"/>
                             <Button x:Name="calculateBack2DFourier" Grid.Column="2" Content="Back" Margin="5" Click ="calculateBack2DFourier_Click"/>
                         </Grid>
-                        
+                    
                     </Grid>
+                </TabItem>
+                <TabItem Header="6. Skeletisation">
+                    <Image x:Name="skeletImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
                 </TabItem>
             </TabControl>
         </Grid>

@@ -83,6 +83,7 @@ namespace WpfRecognitionMethodsApp
             {
                 case "2. Equalisation":
                     this.setImageSource(this.equalisedImage, this.imageProcessor.GetEqualisedBitmapImage());
+                    DataContext = this;
                     break;
 
                 case "3. Filtration":
@@ -124,6 +125,11 @@ namespace WpfRecognitionMethodsApp
 
                 case "5. Two dimentional Fourier":
                     this.image2DSeries.Source = this.imageProcessor.GetSubImage(0, 0, this.dimention, this.dimention);
+                    DataContext = this;
+                    break;
+
+                case "6. Skeletisation":
+                    this.setImageSource(this.skeletImage, this.imageProcessor.GetSkeletBitmapImage());
                     DataContext = this;
                     break;
 
