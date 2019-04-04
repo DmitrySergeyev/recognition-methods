@@ -128,10 +128,10 @@ namespace WpfRecognitionMethodsApp
                     DataContext = this;
                     break;
 
-                case "6. Skeletisation":
-                    this.setImageSource(this.skeletImage, this.imageProcessor.GetSkeletBitmapImage());
-                    DataContext = this;
-                    break;
+                //case "6. Skeletisation":
+                //    this.setImageSource(this.skeletImage, this.imageProcessor.GetSkeletBitmapImage());
+                //    DataContext = this;
+                //    break;
 
                 default:
                     return;
@@ -220,6 +220,14 @@ namespace WpfRecognitionMethodsApp
         private void calculate2DFourier_Click_1(object sender, RoutedEventArgs e)
         {
             this.image2DFourierSeries.Source = this.imageProcessor.GetTwoDimentuionalFourierImage();
+            DataContext = this;
+        }
+
+        private void calculateSkelet_Click_1(object sender, RoutedEventArgs e)
+        {
+            this.skeletImage.Source = this.imageProcessor.GetSkeletBitmapImage();
+            this.imageProcessor.writePixels(this.imageProcessor.GetOriginalImage(), this.imageProcessor.getSkeletBitmapImagePixels());
+
             DataContext = this;
         }
     }

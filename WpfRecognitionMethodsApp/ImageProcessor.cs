@@ -18,6 +18,11 @@ namespace WpfRecognitionMethodsApp
         private WriteableBitmap filteredBitmapImage;
         private WriteableBitmap skeletBitmapImage;
 
+        public byte[] getSkeletBitmapImagePixels()
+        {
+            return this.getImagePixels(this.skeletBitmapImage);
+        }
+
         private WriteableBitmap toFourierBitmap;
         private WriteableBitmap fourierImage;
         private WriteableBitmap fromFourierBitmap;
@@ -37,7 +42,7 @@ namespace WpfRecognitionMethodsApp
             return this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());
         }
 
-        private byte[] getImagePixels(BitmapSource imageSource)
+        public byte[] getImagePixels(BitmapSource imageSource)
         {
             byte[] pixelData = new byte[imageSource.PixelHeight * imageSource.PixelWidth];
             imageSource.CopyPixels(
@@ -112,7 +117,7 @@ namespace WpfRecognitionMethodsApp
             return buff.ToArray();
         }
 
-        private WriteableBitmap writePixels(WriteableBitmap bitmap, byte[] pixels)
+        public WriteableBitmap writePixels(WriteableBitmap bitmap, byte[] pixels)
         {
             bitmap.WritePixels(
                             new Int32Rect(0, 0, bitmap.PixelWidth, bitmap.PixelHeight),
@@ -674,8 +679,8 @@ namespace WpfRecognitionMethodsApp
 
         public WriteableBitmap GetSkeletBitmapImage()
         {
-            if (this.skeletBitmapImage == null)
-            {
+            //if (this.skeletBitmapImage == null)
+            //{
                 this.skeletBitmapImage = new WriteableBitmap(this.originalBitmapImage);
 
                 byte[,] pixels1 = this.GetOrigignalPixels2D();
@@ -711,50 +716,56 @@ namespace WpfRecognitionMethodsApp
             //    byte[,] pixels2 = pixels1;
                 int goOn = 0;
 
-                do
-                {
+                //do
+                //{
                     goOn = 0;
 
-                    // STEP 1
-                    for (int i = 1; i < height - 1; i++)
-                    {
-                        for (int j = 1; j < width - 1; j++)
-                        {
-                            int[] D8 = {
+            // STEP 1
+            for (int i = 1; i < height - 1; i++)
+            {
+                for (int j = 1; j < width - 1; j++)
+                {
+                    int[] D8 = {
                                 pixels1[i - 1, j], pixels1[i - 1, j + 1], pixels1[i, j + 1], pixels1[i + 1, j + 1],
                                 pixels1[i + 1, j], pixels1[i + 1, j - 1], pixels1[i, j - 1], pixels1[i - 1, j - 1],
                             };
 
-                            int Np = D8.Sum();
-                            int Tp = 0;
+                    int Np = D8.Sum();
+                    int Tp = 0;
 
-                            for (int k = 0; k < D8.Length - 1; k++)
-                            {
-                                if (D8[k] == 0 && D8[k + 1] == 1)
-                                {
-                                    Tp++;
-                                }
-                            }
+                    for (int k = 0; k < D8.Length - 1; k++)
+                    {
+                        if (D8[k] == 0 && D8[k + 1] == 1)
+                        {
+                            Tp++;
+                        }
 
-                            if (Np >= 2 && Np <= 6)
+                    }
+
+                    if (D8[D8.Length - 1] == 0 && D8[0] == 1)
+                    {
+                        Tp++;
+                    }
+
+                    if (Np >= 2 && Np <= 6)
+                    {
+                        if (Tp == 1)
+                        {
+                            if ((D8[0] * D8[2] * D8[4]) == 0)
                             {
-                                if (Tp == 1)
+                                if ((D8[2] * D8[4] * D8[6]) == 0)
                                 {
-                                    if ((D8[0] * D8[2] * D8[4]) == 0)
-                                    {
-                                        if ((D8[2] * D8[4] * D8[6]) == 0)
-                                        {
-                                            pixels2[i, j] = 0;
-                                            goOn++;
-                                        }
-                                    }
+                                    pixels2[i, j] = 0;
+                                    goOn++;
                                 }
                             }
                         }
                     }
+                }
+            }
 
                     // DELETE PIXELS
-                    //                    pixels1 = pixels2
+                    // pixels1 = pixels2
                     for (int i = 0; i < height; i++)
                     {
                         for (int j = 0; j < width; j++)
@@ -782,7 +793,12 @@ namespace WpfRecognitionMethodsApp
                                 {
                                     Tp++;
                                 }
-                            }
+
+                        if (D8[D8.Length - 1] == 0 && D8[0] == 1)
+                        {
+                            Tp++;
+                        }
+                    }
 
                             if (Np >= 2 && Np <= 6)
                             {
@@ -811,8 +827,8 @@ namespace WpfRecognitionMethodsApp
                             pixels1[i, j] *= pixels2[i, j];
                         }
                     }
-                }
-                while (goOn != 52);
+                //}
+                //while (goOn != 0);
 
                 byte[] result = this.getOneDimArray(pixels1);
 
@@ -828,11 +844,11 @@ namespace WpfRecognitionMethodsApp
                 }
 
                 return this.writePixels(this.skeletBitmapImage, result);
-            }
-            else
-            {
-                return this.skeletBitmapImage;
-            }
+            //}
+            //else
+            //{
+            //    return this.skeletBitmapImage;
+            //}
 
         }
     }

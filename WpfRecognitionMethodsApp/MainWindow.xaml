@@ -134,7 +134,15 @@
                     </Grid>
                 </TabItem>
                 <TabItem Header="6. Skeletisation">
-                    <Image x:Name="skeletImage" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Image x:Name="skeletImage" Grid.Row="0" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button x:Name="calculateSkelet" Grid.Row="2" Content="Direct" Margin="5" Click ="calculateSkelet_Click_1"/>
+                    </Grid>
                 </TabItem>
             </TabControl>
         </Grid>
