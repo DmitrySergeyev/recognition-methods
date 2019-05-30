@@ -8,12 +8,16 @@
         mc:Ignorable="d"
         Title="MainWindow" Width="1280" Height="720">
     <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="282*"/>
+            <ColumnDefinition Width="355*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="10"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Grid Margin="5" Grid.Row="0">
+        <Grid Margin="5,5,4.6,5.2" Grid.Row="0" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="10"/>
@@ -24,7 +28,7 @@
             <Button Grid.Column="2" x:Name="browseButton" Content="Browse" Width="80" Height="30"
                     Click="browseButton_Click"/>
         </Grid>
-        <Grid Name="dataGrid" Margin="5" Grid.Row="2" IsEnabled="false">
+        <Grid Name="dataGrid" Margin="5,5.2,4.6,5.4" Grid.Row="2" IsEnabled="false" Grid.ColumnSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="10"/>
@@ -56,7 +60,7 @@
 
                 </TabItem>
                 <TabItem Header="3. Filtration">
-                  <Grid>
+                    <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="30"/>
                             <RowDefinition Height="*"/>
@@ -71,7 +75,7 @@
                                 AutoToolTipPlacement="BottomRight" AutoToolTipPrecision="3" Margin="25 5" Cursor="Arrow" ValueChanged="filter_ValueChanged"/>
                         <Button x:Name="showFilteredImageBtn" Grid.Row="2" Grid.Column="1" Content="FIltering (3)" Width="80" Height="30" 
                                 VerticalAlignment="Center" HorizontalAlignment="Center" Click ="filteringButton_Click"/>
-                    </Grid>  
+                    </Grid>
                 </TabItem>
                 <TabItem Header="4. One dimentional Fourier">
                     <Grid>
@@ -130,7 +134,7 @@
                             <Button x:Name="calculate2DFourier" Grid.Column="1" Content="Direct" Margin="5" Click ="calculate2DFourier_Click_1"/>
                             <Button x:Name="calculateBack2DFourier" Grid.Column="2" Content="Back" Margin="5" Click ="calculateBack2DFourier_Click"/>
                         </Grid>
-                    
+
                     </Grid>
                 </TabItem>
                 <TabItem Header="6. Skeletisation">
@@ -140,8 +144,35 @@
                             <RowDefinition Height="10"/>
                             <RowDefinition Height="30"/>
                         </Grid.RowDefinitions>
-                        <Image x:Name="skeletImage" Grid.Row="0" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <Button x:Name="calculateSkelet" Grid.Row="2" Content="Direct" Margin="5" Click ="calculateSkelet_Click_1"/>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <Image x:Name="skeletImage" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="5" Margin="10" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        <Button x:Name="calculateSkelet" Grid.Row="2" Grid.Column="0" Content="Step" Margin="5" Click ="calculateSkelet_Click_1"/>
+                        <Button x:Name="filterSkelet" Grid.Row="2" Grid.Column="2" Content="Filter" Margin="5" Click ="filterSkelet_Click_1"/>
+                        <Button x:Name="saveSkelet" Grid.Row="2" Grid.Column="4" Content="Save" Margin="5" Click ="saveSkelet_Click_1"/>
+                    </Grid>
+                </TabItem>
+                <TabItem Header="7. Recognition">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="10"/>
+                            <RowDefinition Height="30"/>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="50"/>
+                        </Grid.ColumnDefinitions>
+                        <Image x:Name="recognitionImage"  Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" Margin="10" 
+                               VerticalAlignment="Center" HorizontalAlignment="Center"
+                               Height="500" Width="500"/>
+                        <Button x:Name="recognizeImage" Grid.Row="2" Grid.Column="2" Content="Recognize" Margin="5" Click="RecognizeImage_Click"/>
                     </Grid>
                 </TabItem>
             </TabControl>

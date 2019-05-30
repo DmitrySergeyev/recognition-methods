@@ -15,6 +15,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.IO;
 
 namespace WpfRecognitionMethodsApp
 {
@@ -38,6 +39,7 @@ namespace WpfRecognitionMethodsApp
         public Func<double, string> Pixels1DFourierFormatter { get; set; }
 
         private int dimention = 64;
+        private byte [,] recognitionPixels;
 
         public MainWindow()
         {
@@ -206,6 +208,17 @@ namespace WpfRecognitionMethodsApp
 
                     break;
 
+                case "7. Recognition":
+
+                    this.recognitionPixels = this.imageProcessor.getTwoDimArray(
+                        this.imageProcessor.GetSomePixels(x, y, 9, 9),
+                        9);
+
+                    this.recognitionImage.Source = this.imageProcessor.GetSubImage(x, y, 9, 9);
+                    DataContext = this;
+
+                    break;
+
                 default:
                     return;
             }
@@ -228,6 +241,31 @@ namespace WpfRecognitionMethodsApp
             this.skeletImage.Source = this.imageProcessor.GetSkeletBitmapImage();
             this.imageProcessor.writePixels(this.imageProcessor.GetOriginalImage(), this.imageProcessor.getSkeletBitmapImagePixels());
 
+            DataContext = this;
+        }
+
+        private void saveSkelet_Click_1(object sender, RoutedEventArgs e)
+        {
+            using (FileStream stream = new FileStream("123.png", FileMode.CreateNew))
+            {
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(this.imageProcessor.GetSkeletBitmapImage()));
+                encoder.Save(stream);
+            }
+        }
+       
+        private void filterSkelet_Click_1(object sender, RoutedEventArgs e)
+        {
+            this.skeletImage.Source = this.imageProcessor.getFilteredSkeletBitmapImage();
+
+            DataContext = this;
+        }
+
+        private void RecognizeImage_Click(object sender, RoutedEventArgs e)
+        {
+            this.recognitionImage.Height = 500;
+            this.recognitionImage.Width = 500;
+            this.recognitionImage.Source = this.imageProcessor.calculateMomentResults(this.recognitionPixels);
             DataContext = this;
         }
     }

@@ -17,6 +17,7 @@ namespace WpfRecognitionMethodsApp
         private WriteableBitmap equalisedBitmapImage;
         private WriteableBitmap filteredBitmapImage;
         private WriteableBitmap skeletBitmapImage;
+        private WriteableBitmap recognitionBitmap;
 
         public byte[] getSkeletBitmapImagePixels()
         {
@@ -34,12 +35,14 @@ namespace WpfRecognitionMethodsApp
 
         private byte[] getOriginalPixels()
         {
-            return this.getImagePixels(this.originalBitmapImage);
+            byte[] result = this.getImagePixels(this.originalBitmapImage);
+            return result;
         }
 
         public byte[,] GetOriginalPixels2D()
         {
-            return this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());
+            byte[,] result = this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());
+            return result;
         }
 
         public byte[] getImagePixels(BitmapSource imageSource)
@@ -53,7 +56,7 @@ namespace WpfRecognitionMethodsApp
             return pixelData;
         }
 
-         byte[,] GetOrigignalPixels2D()
+        private byte[,] GetOrigignalPixels2D()
         {
             return this.getTwoDimArray(this.getOriginalPixels(), this.GetOriginalWidth());
         }
@@ -63,14 +66,14 @@ namespace WpfRecognitionMethodsApp
             return this.getTwoDimArray(this.getImagePixels(this.toFourierBitmap), this.toFourierBitmap.PixelWidth);
         }
 
-        private byte[,] getTwoDimArray(byte[] oneDimArray, int arrayWidth)
+        public byte[,] getTwoDimArray(byte[] oneDimArray, int arrayWidth)
         {
             if (oneDimArray.Length % arrayWidth != 0)
             {
                 throw new ArgumentException();
             }
             else
-            { 
+            {
                 int x = oneDimArray.Length / arrayWidth;
                 int y = arrayWidth;
 
@@ -114,7 +117,8 @@ namespace WpfRecognitionMethodsApp
                 buff.Add(a);
             }
 
-            return buff.ToArray();
+            byte[] result = buff.ToArray();
+            return result;
         }
 
         public WriteableBitmap writePixels(WriteableBitmap bitmap, byte[] pixels)
@@ -227,6 +231,24 @@ namespace WpfRecognitionMethodsApp
             return this.toFourierBitmap;
         }
 
+        public ImageSource GetSubRecognitionImage(int x, int y, int dx, int dy)
+        {
+            byte[] pixels = this.GetSomePixels(x, y, dx, dy);
+
+            this.recognitionBitmap = new WriteableBitmap(
+                dx,
+                dy,
+                this.originalBitmapImage.DpiX,
+                this.originalBitmapImage.DpiY,
+                this.originalBitmapImage.Format,
+                this.originalBitmapImage.Palette
+            );
+
+            this.writePixels(this.recognitionBitmap, pixels);
+
+            return this.recognitionBitmap;
+        }
+
         public WriteableBitmap GetBinaryBitmapImage()
         {
             if (this.binaryBitmapImage == null)
@@ -292,6 +314,7 @@ namespace WpfRecognitionMethodsApp
                 return this.equalisedBitmapImage;
             }
         }
+
         public float[] GetTransformFunction()
         {
             if (this.transformFunction == null)
@@ -312,7 +335,6 @@ namespace WpfRecognitionMethodsApp
         }
         public ImageSource GetFilteredImage(int filterValue)
         {
-
             this.filteredBitmapImage = new WriteableBitmap(this.originalBitmapImage);
             byte[,] pixels = this.GetOriginalPixels2D();
 
@@ -363,30 +385,33 @@ namespace WpfRecognitionMethodsApp
 
         public byte[] GetSomePixels(int x, int y, int dx, int dy)
         {
-            return this.getOneDimArray(this.GetSome2DPixelsFromOriginImage(x, y, dx, dy));
+            byte [] result = this.getOneDimArray(this.GetSome2DPixelsFromOriginImage(x, y, dx, dy));
+            return result;
         }
 
-        public byte[,] GetSome2DPixels(byte[,] source, int x, int y, int dx, int dy)
+        public byte[,] GetSome2DPixels(byte[,] source, int x, int y, int dy, int dx)
         {
-            byte[,] result = new byte[dx, dy];
+            byte[,] result = new byte[dy, dx];
 
-            if ((x + dx) < this.GetOriginalWidth() && (y + dy) < this.GetOriginalHeight())
+            //if ((x + dx) < this.GetOriginalWidth() && (y + dy) < this.GetOriginalHeight())
+            //{
+            for (int j = 0; j < dy; j++)
             {
-                for (int i = 0; i < dy; i++)
+                for (int i = 0; i < dx; i++)
                 {
-                    for (int j = 0; j < dx; j++)
-                    {
-                        result[i, j] = source[y + i, x + j];
-                    }
+                    //result[i, j] = source[y + i, x + j];
+                    result[j, i] = source[y + j, x + i];
                 }
             }
+            //}
 
             return result;
         }
 
         public byte[,] GetSome2DPixelsFromOriginImage(int x, int y, int dx, int dy)
         {
-            return this.GetSome2DPixels(this.GetOriginalPixels2D(), x, y, dx, dy);
+            byte[,] result = this.GetSome2DPixels(this.GetOriginalPixels2D(), x, y, dx, dy);
+            return result;
         }
 
         public double[] GetOneDimentuionalFourier(int[] pixels)
@@ -681,44 +706,44 @@ namespace WpfRecognitionMethodsApp
         {
             //if (this.skeletBitmapImage == null)
             //{
-                this.skeletBitmapImage = new WriteableBitmap(this.originalBitmapImage);
+            this.skeletBitmapImage = this.GetBinaryBitmapImage();
 
-                byte[,] pixels1 = this.GetOrigignalPixels2D();
-                
-                int height = pixels1.GetUpperBound(0) + 1;
-                int width = pixels1.GetUpperBound(1) + 1;
+            byte[,] pixels1 = this.GetOrigignalPixels2D();
 
-                byte[,] pixels2 = new byte[height, width];
+            int height = pixels1.GetUpperBound(0) + 1;
+            int width = pixels1.GetUpperBound(1) + 1;
 
-                // Binarisation 
-                for (int i = 0; i < height; i++)
+            byte[,] pixels2 = new byte[height, width];
+
+            // Binarisation 
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
                 {
-                    for (int j = 0; j < width; j++)
-                    {
-                        pixels1[i, j] = pixels1[i, j] >= 128 ? (byte)0 : (byte)1;
-                        pixels2[i, j] = 1;
-                    }
+                    pixels1[i, j] = pixels1[i, j] >= 128 ? (byte)0 : (byte)1;
+                    pixels2[i, j] = 1;
                 }
+            }
 
-                // Borders
-                //for (int i = 0; i < height; i++)
-                //{
-                //    pixels1[i, 0] = 255;
-                //    pixels1[i, width - 1] = 255;
-                //}
+            // Borders
+            //for (int i = 0; i < height; i++)
+            //{
+            //    pixels1[i, 0] = 255;
+            //    pixels1[i, width - 1] = 255;
+            //}
 
-                //for (int i = 0; i < width; i++)
-                //{
-                //    pixels1[0, i] = 255;
-                //    pixels1[height - 1, i] = 255;
-                //}
+            //for (int i = 0; i < width; i++)
+            //{
+            //    pixels1[0, i] = 255;
+            //    pixels1[height - 1, i] = 255;
+            //}
 
             //    byte[,] pixels2 = pixels1;
-                int goOn = 0;
+            int goOn = 0;
 
-                //do
-                //{
-                    goOn = 0;
+            //do
+            //{
+            goOn = 0;
 
             // STEP 1
             for (int i = 1; i < height - 1; i++)
@@ -764,35 +789,35 @@ namespace WpfRecognitionMethodsApp
                 }
             }
 
-                    // DELETE PIXELS
-                    // pixels1 = pixels2
-                    for (int i = 0; i < height; i++)
-                    {
-                        for (int j = 0; j < width; j++)
-                        {
-                            pixels1[i, j] *= pixels2[i, j];
-                        }
-                    }
+            // DELETE PIXELS
+            // pixels1 = pixels2
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixels1[i, j] *= pixels2[i, j];
+                }
+            }
 
-                    // STEP 2
-                    for (int i = 1; i < height - 1; i++)
-                    {
-                        for (int j = 1; j < width - 1; j++)
-                        {
-                            int[] D8 = {
+            // STEP 2
+            for (int i = 1; i < height - 1; i++)
+            {
+                for (int j = 1; j < width - 1; j++)
+                {
+                    int[] D8 = {
                                 pixels1[i - 1, j], pixels1[i - 1, j + 1], pixels1[i, j + 1], pixels1[i + 1, j + 1],
                                 pixels1[i + 1, j], pixels1[i + 1, j - 1], pixels1[i, j - 1], pixels1[i - 1, j - 1],
                             };
 
-                            int Np = D8.Sum();
-                            int Tp = 0;
+                    int Np = D8.Sum();
+                    int Tp = 0;
 
-                            for (int k = 0; k < D8.Length - 1; k++)
-                            {
-                                if (D8[k] == 0 && D8[k + 1] == 1)
-                                {
-                                    Tp++;
-                                }
+                    for (int k = 0; k < D8.Length - 1; k++)
+                    {
+                        if (D8[k] == 0 && D8[k + 1] == 1)
+                        {
+                            Tp++;
+                        }
 
                         if (D8[D8.Length - 1] == 0 && D8[0] == 1)
                         {
@@ -800,61 +825,227 @@ namespace WpfRecognitionMethodsApp
                         }
                     }
 
-                            if (Np >= 2 && Np <= 6)
+                    if (Np >= 2 && Np <= 6)
+                    {
+                        if (Tp == 1)
+                        {
+                            if ((D8[0] * D8[2] * D8[6]) == 0)
                             {
-                                if (Tp == 1)
+                                if ((D8[0] * D8[4] * D8[6]) == 0)
                                 {
-                                    if ((D8[0] * D8[2] * D8[6]) == 0)
-                                    {
-                                        if ((D8[0] * D8[4] * D8[6]) == 0)
-                                        {
-                                            pixels2[i, j] = 0;
-                                            goOn++;
-                                        }
-                                    }
+                                    pixels2[i, j] = 0;
+                                    goOn++;
                                 }
                             }
                         }
                     }
-
-                    // DELETE PIXELS
-                    //pixels1 = pixels2;
-
-                    for (int i = 0; i < height; i++)
-                    {
-                        for (int j = 0; j < width; j++)
-                        {
-                            pixels1[i, j] *= pixels2[i, j];
-                        }
-                    }
-                //}
-                //while (goOn != 0);
-
-                byte[] result = this.getOneDimArray(pixels1);
-
-                for (int i = 0; i < result.Length; i++)
-                {
-                    if (result[i] == 0) {
-                        result[i] = 255;
-                    }
-                    else
-                    {
-                        result[i] = 0;
-                    }
                 }
+            }
 
-                return this.writePixels(this.skeletBitmapImage, result);
+            // DELETE PIXELS
+            //pixels1 = pixels2;
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixels1[i, j] *= pixels2[i, j];
+                }
+            }
+            //}
+            //while (goOn != 0);
+
+            byte[] result = this.getOneDimArray(pixels1);
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (result[i] == 0)
+                {
+                    result[i] = 255;
+                }
+                else
+                {
+                    result[i] = 0;
+                }
+            }
+
+            return this.writePixels(this.skeletBitmapImage, result);
             //}
             //else
             //{
             //    return this.skeletBitmapImage;
             //}
+        }
 
+        public WriteableBitmap getFilteredSkeletBitmapImage()
+        {
+            byte[,] pixels1 = this.getTwoDimArray(this.getImagePixels(this.skeletBitmapImage), this.GetOriginalWidth());
+            int height = pixels1.GetUpperBound(0);
+            int width = pixels1.GetUpperBound(1);
+
+            for (int i = 0; i < height - 1; i++)
+            {
+                for (int j = 0; j < width - 1; j++)
+                {
+                    int[] D4 =
+                    {
+                        pixels1[i, j], pixels1[i, j + 1], pixels1[j + 1, i + 1], pixels1[i, j + 1]
+                    };
+
+                    if (D4.Sum() == 3)
+                    {
+                        if (D4[0] == 1 && D4[1] == 1 && D4[2] == 1) pixels1[i, j + 1] = 0;
+                        if (D4[1] == 1 && D4[2] == 1 && D4[3] == 1) pixels1[i + 1, j + 1] = 0;
+                        if (D4[2] == 1 && D4[3] == 1 && D4[0] == 1) pixels1[i + 1, j] = 0;
+                        if (D4[3] == 1 && D4[0] == 1 && D4[1] == 1) pixels1[i, j] = 0;
+                    }
+                }
+            }
+
+            byte[] result = this.getOneDimArray(pixels1);
+
+            for (int i = 0; i < result.Length; i++)
+            {
+                if (result[i] == 0)
+                {
+                    result[i] = 255;
+                }
+                else
+                {
+                    result[i] = 0;
+                }
+            }
+
+            return this.writePixels(this.skeletBitmapImage, result);
+        }
+
+        private double[] calculateMoments(byte[,] pixels)
+        {
+            int x = pixels.GetLength(0);
+            int y = pixels.GetLength(1);
+
+            long m00 = 0;
+            long m01 = 0;
+            long m11 = 0;
+            long m02 = 0;
+            long m03 = 0;
+            long m10 = 0;
+            long m20 = 0;
+            long m30 = 0;
+            long m12 = 0;
+            long m21 = 0;
+
+            for (int j = 0; j < y; j++)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    m00 += pixels[i, j];
+                    m01 += m00 * i;
+                    m10 += m00 * j;
+
+                    m11 += m00 * i * j;
+                    m02 += m01 * i;
+                    m20 += m10 * j;
+
+                    m03 += m02 * i;
+                    m30 += m20 * j;
+                    m21 += m20 * i;
+                    m12 += m02 * j;
+                }
+            }
+
+            double X = 0;
+            double Y = 0;
+
+            if (m00 == 0)
+            {
+                X = m10 / m00;
+                Y = m01 / m00;
+            }
+            else
+            {
+                X = 0;
+                Y = 0;
+            }
+
+            double k00 = m00;
+            double k10 = 0.0;
+            double k01 = 0.0;
+            double k11 = m11 - X * m10;
+            double k20 = m20 - X * m10;
+            double k02 = m02 - Y * m01;
+            double k30 = m30 - 3 * X * m20 + 2 * Math.Pow(X, 2.0) * m10;
+            double k03 = m03 - 3 * Y * m02 + 2 * Math.Pow(Y, 2.0) * m01;
+            double k21 = m21 - 2 * X * m11 - Y * m20 + 2 * Math.Pow(X, 2.0) * m01;
+            double k12 = m12 - 2 * Y * m11 - X * m02 + 2 * Math.Pow(Y, 2.0) * m10;
+
+            double p11 = k11 / Math.Pow(k00, 2.0);
+            double p20 = k20 / Math.Pow(k00, 2.0);
+            double p30 = k30 / Math.Pow(k00, 2.5);
+            double p02 = k02 / Math.Pow(k00, 2.0);
+            double p03 = k02 / Math.Pow(k00, 2.5);
+            double p12 = k12 / Math.Pow(k00, 2.5);
+            double p21 = k21 / Math.Pow(k00, 2.5);
+
+            double F1 = p20 - p02;
+            double F2 = Math.Pow((p20 - p02), 2.0) + 4 * Math.Pow(p11, 2.0);
+            double F3 = Math.Pow((p30 - 3 * p12), 2.0) + Math.Pow((3 * p21 - p03), 2.0);
+            double F4 = Math.Pow((p30 + p12), 2.0) + Math.Pow((p21 + p03), 2.0);
+
+            return new double[] { F1, F2, F3, F4 };
+        }
+
+        private double calculateDiff(double[] mainMoments, double[] currentMomments)
+        {
+            double result = 0.0;
+
+            for (int i = 0; i < 4; i++)
+            {
+                result += Math.Pow((mainMoments[i] - currentMomments[i]), 2.0) / Math.Pow(mainMoments[i], 2.0);
+            }
+
+            return result;
+        }
+
+        public ImageSource calculateMomentResults(byte[,] point)
+        {
+            double[] mainMoments = calculateMoments(point);
+
+            int x = this.GetOriginalWidth();
+            int y = this.GetOriginalHeight();
+            double[,] resultDouble = new double[y, x];
+            byte[,] resultByte = new byte[y, x];
+            byte[,] originalPixels = this.getTwoDimArray(this.getOriginalPixels(), x);
+            double min = 0;
+            double max = 0;
+
+            for (int j = 5; j < (y - 5); j++)
+            {
+                for (int i = 5; i < (x - 5); i++)
+                {
+                    double[] currentMoments = calculateMoments(this.GetSome2DPixels(originalPixels, i - 7, j - 7, 9, 9));
+                    double diff = calculateDiff(mainMoments, currentMoments);
+
+                    if (diff > max) max = diff;
+
+                    resultDouble[j, i] = diff;
+                }
+            }
+
+            for (int j = 5; j < (y - 5); j++)
+            {
+                for (int i = 5; i < (x - 5); i++)
+                {
+                    resultByte[j, i] = (byte)(resultDouble[j, i] / max * 255.0);
+                }
+            }
+            
+            this.recognitionBitmap = new WriteableBitmap(this.originalBitmapImage);
+            //return this.recognitionBitmap;
+            return this.writePixels(this.recognitionBitmap, this.getOneDimArray(resultByte));
         }
     }
-
-    
-
+   
     public class Complex
     {
         public double a;
